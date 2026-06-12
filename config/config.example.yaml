@@ -1,0 +1,15 @@
+# Copy to config/config.yaml and adjust. Do NOT commit real credentials;
+# credentials are read from environment variables only.
+planner:
+  fresh_horizon_days: 2        # fresh order covers cooking day + max 1 day ahead
+  # weekly_delivery_day: null  # default: morning of the first cooking day
+
+classification:
+  # Uncomment to fully replace the built-in Czech keyword defaults:
+  # fresh_keywords: [maso, mleko, ...]
+  # pantry_keywords: [sul, olej, ...]
+  overrides:
+    # exact ingredient name (case/diacritics insensitive) -> fresh|durable|pantry
+    "cibule": durable
+    "česnek": durable
+    "brambory": durable

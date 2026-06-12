@@ -1,0 +1,29 @@
+[
+  {"day": "2026-06-15", "recipe": "Kuře na paprice",
+   "ingredients": [
+     {"name": "kuřecí stehna", "quantity": "600 g"},
+     {"name": "smetana ke šlehání", "quantity": "250 g"},
+     {"name": "cibule", "quantity": "1 ks"},
+     {"name": "mletá paprika", "quantity": "1 lžíce"},
+     {"name": "sůl", "quantity": ""},
+     {"name": "hladká mouka", "quantity": "20 g"}]},
+  {"day": "2026-06-16", "recipe": "Těstoviny s rajčaty",
+   "ingredients": [
+     {"name": "těstoviny penne", "quantity": "400 g"},
+     {"name": "rajčata cherry", "quantity": "300 g"},
+     {"name": "mozzarella", "quantity": "125 g"},
+     {"name": "bazalka čerstvá", "quantity": "1 hrst"},
+     {"name": "olivový olej", "quantity": "2 lžíce"}]},
+  {"day": "2026-06-18", "recipe": "Losos s bramborem",
+   "ingredients": [
+     {"name": "losos filet", "quantity": "500 g"},
+     {"name": "brambory", "quantity": "800 g"},
+     {"name": "máslo", "quantity": "50 g"},
+     {"name": "kopr čerstvý", "quantity": "1 svazek"}]},
+  {"day": "2026-06-20", "recipe": "Hovězí guláš",
+   "ingredients": [
+     {"name": "hovězí kližka", "quantity": "800 g"},
+     {"name": "cibule", "quantity": "3 ks"},
+     {"name": "rajčatový protlak", "quantity": "70 g"},
+     {"name": "kmín celý", "quantity": "1 lžička"}]}
+]

@@ -1,0 +1,13 @@
+# local-only artifacts (never commit)
+.claude-local/
+# secrets
+.env
+config/config.yaml
+# python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+dist/
+build/
