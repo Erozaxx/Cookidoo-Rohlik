@@ -1,36 +1,36 @@
 # Metrics — vývojová session 2026-06-12
 
-Stav k 2026-06-12 15:04 CEST. Pokrývá jedinou konverzaci s Claude
+Stav k 2026-06-12 15:15 CEST. Pokrývá jedinou konverzaci s Claude
 (Fable 5, mobilní aplikace), ve které vznikl celý dosavadní projekt
-(fáze 1–3 + dokumentace). Dle uživatele v aktuálním 5h okně neproběhlo
-nic jiného.
+(fáze 1–3, dokumentace, YAML product map). Dle uživatele v aktuálním
+5h okně neproběhlo nic jiného.
 
 ## Tool cally (přesná čísla z konverzace)
 
 | Nástroj | Počet | Použití |
 |---|---|---|
-| bash_tool | 28 | scaffolding, testy, git, introspekce API, push |
+| bash_tool | 33 | scaffolding, testy, git, introspekce API, push |
 | create_file | 16 | moduly, testy, HA komponenta (1× selhal — existující README) |
 | str_replace | 4 | opravy testu, regexu, rozšíření CLI |
 | present_files | 2 | zip bundly fáze 1 a 2 |
 | web_search | 2 | rešerše Rohlík MCP, cookidoo-api |
 | web_fetch | 1 | kontrola GitHub repa |
 | ask_user_input_v0 | 1 | volba architektury (checkout, runtime) |
-| user_time_v0 | 1 | timestamp tohoto souboru |
-| **Celkem** | **55** | |
-
-(+ tento commit přidá 1–2 bash cally navíc)
+| user_time_v0 | 2 | timestampy tohoto souboru |
+| **Celkem** | **61** | (včetně commitu této aktualizace) |
 
 ## Konverzace
 
-- 8 uživatelských zpráv (zadání → architektura → fáze 1–3 → push → README → metriky)
-- 4 git commity pushnuté na main, 19/19 testů
+- 14 uživatelských zpráv (zadání → architektura → fáze 1–3 → push →
+  README → metriky → YAML product map)
+- 8 git commitů pushnutých na main, 20/20 testů
 - 2× klonování referenčních repozitářů, 1× instalace HA do venv (import-check)
 
 ## Spotřeba — ověřená data z aplikace (Settings → Usage)
 
 Plán: **Claude Max 5×**. Screenshot z 2026-06-12 15:06 CEST,
-po dokončení celé session (fáze 1–3, dokumentace, push):
+po dokončení fází 1–3 a dokumentace (pozdější drobné úpravy — YAML
+mapa, aktualizace metrik — už v čísle nejsou):
 
 | Limit | Spotřeba | Reset |
 |---|---|---|
