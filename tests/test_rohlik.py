@@ -83,7 +83,7 @@ def make_order(items: list[OrderItem]) -> PlannedOrder:
 
 class TestMatcherAndOrchestrator:
     def test_match_search_then_cache(self, tmp_path: Path) -> None:
-        matcher = ProductMatcher(cache_path=tmp_path / "map.json")
+        matcher = ProductMatcher(cache_path=tmp_path / "map.yaml")
         fake = FakeRohlik()
         item = OrderItem(name="kuřecí stehna", quantities=["1,2 kg"])
 
@@ -93,12 +93,12 @@ class TestMatcherAndOrchestrator:
         assert not first.from_cache
 
         matcher.save_cache()
-        matcher2 = ProductMatcher(cache_path=tmp_path / "map.json")
+        matcher2 = ProductMatcher(cache_path=tmp_path / "map.yaml")
         second = asyncio.run(matcher2.match(item, fake))
         assert second.from_cache and second.product.id == 1
 
     def test_resolve_order_reports_unmatched_and_fills_cart(self, tmp_path: Path) -> None:
-        matcher = ProductMatcher(cache_path=tmp_path / "map.json")
+        matcher = ProductMatcher(cache_path=tmp_path / "map.yaml")
         fake = FakeRohlik()
         order = make_order([
             OrderItem(name="kuřecí stehna", quantities=["600 g"]),
@@ -113,3 +113,22 @@ class TestMatcherAndOrchestrator:
         assert sorted(fake.cart) == [(1, 1), (3, 1)]
         assert res.executed
         assert res.estimated_price == 89.9 + 49.9
+
+    def test_legacy_json_cache_migrated(self, tmp_path: Path) -> None:
+        import json
+
+        legacy = tmp_path / "map.json"
+        legacy.write_text(json.dumps({
+            "kureci stehna": {
+                "product_id": 1, "product_name": "Kuřecí stehna chlazená",
+                "brand": "", "price": 89.9, "currency": "CZK",
+                "textual_amount": "600 g",
+            }
+        }), encoding="utf-8")
+        matcher = ProductMatcher(cache_path=tmp_path / "map.yaml")
+        item = OrderItem(name="kuřecí stehna", quantities=["600 g"])
+        res = asyncio.run(matcher.match(item, FakeRohlik()))
+        assert res.from_cache and res.product.id == 1
+        matcher.save_cache()
+        text = (tmp_path / "map.yaml").read_text(encoding="utf-8")
+        assert "product_id: 1" in text and text.startswith("# Mapování")

@@ -1,0 +1,17 @@
+# Mapování ingredience Cookidoo -> produkt Rohlík (kurátorovatelné).
+# Zkopíruj do config/product_map.yaml (matcher si ho jinak založí sám
+# a postupně doplňuje naučená mapování).
+#
+# Klíč je název ingredience — na velikosti písmen a diakritice nezáleží.
+# Povinné je jen product_id (najdeš ho v URL produktu na rohlik.cz).
+# textual_amount = velikost balení; z ní se počítá počet kusů.
+
+kuřecí stehna:
+  product_id: 1294352
+  product_name: Vodňanské kuřecí stehna chlazená
+  textual_amount: 600 g
+
+smetana ke šlehání:
+  product_id: 1351722
+  product_name: Tatra smetana ke šlehání 31%
+  textual_amount: 250 ml

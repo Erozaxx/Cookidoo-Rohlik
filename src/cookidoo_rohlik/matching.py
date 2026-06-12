@@ -1,23 +1,26 @@
 """Match Cookidoo ingredient names to Rohlik products.
 
 Strategy:
-1. Persistent cache first (learned/curated mapping, JSON file).
+1. Persistent cache first (learned/curated mapping, YAML file).
 2. Otherwise search Rohlik and score candidates by token overlap of
    normalized names; ties broken by price (cheaper wins).
 3. Below `min_score` the item is reported as UNMATCHED for manual review
    (and shows up in the notification instead of silently guessing).
 
-The cache file doubles as a curation point: users can edit it to pin an
-exact product id for an ingredient.
+The cache file doubles as a curation point: it is human-friendly YAML
+keyed by the original ingredient name (lookup is case/diacritics
+insensitive); users edit it to pin an exact product id. A legacy
+`.json` cache next to the YAML path is migrated automatically.
 """
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+
+import yaml
 
 from .classify import normalize
 from .models import OrderItem
@@ -65,18 +68,48 @@ class SearchClient(Protocol):
     async def search_products(self, query: str, limit: int = 10) -> list[Product]: ...
 
 
+_CACHE_HEADER = """\
+# Mapování ingredience Cookidoo -> produkt Rohlík (kurátorovatelné).
+# Klíč je název ingredience (na velikosti písmen a diakritice nezáleží).
+# Povinné je jen product_id; product_name a textual_amount (velikost
+# balení, např. "500 g") doporučujeme vyplnit — z textual_amount se
+# počítá počet kusů. Smaž řádek/blok a matcher si produkt najde znovu.
+"""
+
+
 class ProductMatcher:
     def __init__(self, cache_path: Path, min_score: float = 0.5) -> None:
         self._cache_path = cache_path
         self._min_score = min_score
+        # normalized name -> entry; entry["ingredient"] keeps display name
         self._cache: dict[str, dict] = {}
+        raw: dict | None = None
         if cache_path.exists():
-            self._cache = json.loads(cache_path.read_text(encoding="utf-8"))
+            raw = yaml.safe_load(cache_path.read_text(encoding="utf-8"))
+        else:
+            legacy = cache_path.with_suffix(".json")
+            if legacy.exists():  # migrate pre-YAML cache transparently
+                import json
+
+                raw = json.loads(legacy.read_text(encoding="utf-8"))
+                logger.info("Migrating legacy JSON cache %s", legacy)
+        for name, entry in (raw or {}).items():
+            entry = dict(entry)
+            entry.setdefault("ingredient", name)
+            self._cache[normalize(name)] = entry
 
     def save_cache(self) -> None:
         self._cache_path.parent.mkdir(parents=True, exist_ok=True)
+        out = {
+            entry.get("ingredient", key): {
+                k: v for k, v in entry.items() if k != "ingredient"
+            }
+            for key, entry in self._cache.items()
+        }
         self._cache_path.write_text(
-            json.dumps(self._cache, ensure_ascii=False, indent=2, sort_keys=True),
+            _CACHE_HEADER
+            + yaml.safe_dump(out, allow_unicode=True, sort_keys=True,
+                             default_flow_style=False),
             encoding="utf-8",
         )
 
@@ -118,6 +151,7 @@ class ProductMatcher:
                                score=best_score, from_cache=False)
 
         self._cache[key] = {
+            "ingredient": item.name,
             "product_id": best.id,
             "product_name": best.name,
             "brand": best.brand,

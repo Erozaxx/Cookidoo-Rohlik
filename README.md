@@ -32,8 +32,9 @@ Ingredience, které máš doma (sůl, olej, koření…), se neobjednávají vů
 3. **Plánovač** — rozdělí týden na objednávky: 1× trvanlivá + čerstvá „okna"
    max 2 dny (nastavitelné 1–4).
 4. **Párování** — najde produkty na Rohlíku, spočítá počet balení podle
-   gramáže a učí se: jednou potvrzené mapování ingredience → produkt si
-   pamatuje v `product_map.json` (můžeš ručně upravovat).
+   gramáže a učí se: jednou nalezené mapování ingredience → produkt si
+   pamatuje v čitelném `product_map.yaml`, který můžeš ručně upravovat
+   (ukázka v `config/product_map.example.yaml`).
 5. **Košík + notifikace** — naplní košík na Rohlíku a pošle ti report
    s cenou a případnými nenalezenými položkami. **Checkout dokončuješ
    jedním tapem v aplikaci Rohlík** — automatické dokončení objednávky
@@ -106,10 +107,21 @@ event `cookidoo_rohlik_orders_prepared` — na něj navěsíš vlastní notifika
       "rajčatový protlak": durable
   ```
 
-- **Párování**: `config/product_map.json` (v HA `config/cookidoo_rohlik_product_map.json`)
-  si pamatuje naučená mapování. Když matcher vybere blbost, přepiš v souboru
-  `product_id` na správný produkt — příště už se nezmýlí. Položky pod 50%
-  shodou se nehádají a objeví se v notifikaci jako „nenalezeno".
+- **Párování**: `config/product_map.yaml` (v HA
+  `config/cookidoo_rohlik_product_map.yaml`) si pamatuje naučená mapování
+  v čitelném YAML — klíčem je název ingredience, jak ho znáš z receptu:
+
+  ```yaml
+  kuřecí stehna:
+    product_id: 1294352          # z URL produktu na rohlik.cz
+    product_name: Vodňanské kuřecí stehna chlazená
+    textual_amount: 600 g        # velikost balení -> výpočet počtu kusů
+  ```
+
+  Když matcher vybere blbost, přepiš `product_id` na správný produkt —
+  příště už se nezmýlí; smazáním záznamu ho necháš hledat znovu. Položky
+  pod 50% shodou se nehádají a objeví se v notifikaci jako „nenalezeno".
+  Starší `product_map.json` se při prvním běhu automaticky zmigruje.
 
 ## Roadmap
 

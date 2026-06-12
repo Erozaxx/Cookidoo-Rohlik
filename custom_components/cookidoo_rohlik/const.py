@@ -24,4 +24,4 @@ ATTR_EXECUTE = "execute"
 
 EVENT_ORDERS_PREPARED = f"{DOMAIN}_orders_prepared"
 
-PRODUCT_MAP_FILENAME = "cookidoo_rohlik_product_map.json"
+PRODUCT_MAP_FILENAME = "cookidoo_rohlik_product_map.yaml"

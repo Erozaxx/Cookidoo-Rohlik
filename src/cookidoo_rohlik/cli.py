@@ -72,8 +72,8 @@ def main(argv: list[str] | None = None) -> int:
     p_order.add_argument("--date", type=str, help="Only the order delivered on this date (YYYY-MM-DD)")
     p_order.add_argument("--execute", action="store_true",
                          help="Actually add matched items to the Rohlik cart")
-    p_order.add_argument("--cache", type=Path, default=Path("config/product_map.json"),
-                         help="Ingredient->product mapping cache (curatable)")
+    p_order.add_argument("--cache", type=Path, default=Path("config/product_map.yaml"),
+                         help="Ingredient->product mapping cache, YAML (curatable)")
     p_order.add_argument("--config", type=Path, default=Path("config/config.yaml"))
     p_order.add_argument("-v", "--verbose", action="store_true")
 
