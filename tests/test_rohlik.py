@@ -132,3 +132,32 @@ class TestMatcherAndOrchestrator:
         matcher.save_cache()
         text = (tmp_path / "map.yaml").read_text(encoding="utf-8")
         assert "product_id: 1" in text and text.startswith("# Mapování")
+
+    def test_class_override_in_map_file(self, tmp_path: Path) -> None:
+        from cookidoo_rohlik.classify import Classifier, load_map_overrides
+        from cookidoo_rohlik.models import ItemClass
+
+        map_file = tmp_path / "map.yaml"
+        map_file.write_text(
+            "rajčatový protlak:\n  class: durable\n"
+            "kapary:\n  class: pantry\n"
+            "kuřecí stehna:\n  product_id: 1\n  textual_amount: 600 g\n",
+            encoding="utf-8",
+        )
+        c = Classifier()
+        c.overrides.update(load_map_overrides(map_file))
+        assert c.classify("Rajčatový protlak") is ItemClass.DURABLE
+        assert c.classify("kapary") is ItemClass.PANTRY
+        assert c.classify("kuřecí stehna") is ItemClass.FRESH  # no class field
+
+    def test_class_only_entry_still_searches_product(self, tmp_path: Path) -> None:
+        map_file = tmp_path / "map.yaml"
+        map_file.write_text("kuřecí stehna:\n  class: fresh\n", encoding="utf-8")
+        matcher = ProductMatcher(cache_path=map_file)
+        res = asyncio.run(
+            matcher.match(OrderItem(name="kuřecí stehna", quantities=["600 g"]), FakeRohlik())
+        )
+        assert res.matched and not res.from_cache  # searched despite entry
+        matcher.save_cache()
+        text = map_file.read_text(encoding="utf-8")
+        assert "class: fresh" in text and "product_id: 1" in text  # both preserved

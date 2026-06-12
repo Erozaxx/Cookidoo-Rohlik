@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import unicodedata
 from dataclasses import dataclass, field
+from pathlib import Path
+
+import yaml
 
 from .models import ItemClass
 
@@ -74,3 +77,24 @@ class Classifier:
             for name, value in (section.get("overrides", {}) or {}).items()
         }
         return cls(fresh_keywords=fresh, pantry_keywords=pantry, overrides=overrides)
+
+
+def load_map_overrides(map_path: Path) -> dict[str, ItemClass]:
+    """Extract `class:` overrides from the product_map.yaml file.
+
+    Entries there may carry an optional `class: fresh|durable|pantry`
+    so users curate product mapping AND classification in one place.
+    Invalid values are skipped with a warning-by-omission (validated
+    by ItemClass).
+    """
+    if not map_path.exists():
+        return {}
+    raw = yaml.safe_load(map_path.read_text(encoding="utf-8")) or {}
+    overrides: dict[str, ItemClass] = {}
+    for name, entry in raw.items():
+        if isinstance(entry, dict) and "class" in entry:
+            try:
+                overrides[normalize(name)] = ItemClass(entry["class"])
+            except ValueError:
+                pass
+    return overrides

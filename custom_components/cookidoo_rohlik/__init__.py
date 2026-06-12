@@ -39,7 +39,7 @@ from .const import (
     SERVICE_PLAN_WEEK,
     SERVICE_PREPARE_ORDERS,
 )
-from .core.classify import Classifier
+from .core.classify import Classifier, load_map_overrides
 from .core.cookidoo_client import CookidooWeekClient
 from .core.matching import ProductMatcher
 from .core.models import Ingredient, PlannedOrder
@@ -79,9 +79,14 @@ def _entry(hass: HomeAssistant) -> ConfigEntry:
     return entries[0]
 
 
-def _classifier(entry: ConfigEntry) -> Classifier:
+def _classifier(hass: HomeAssistant, entry: ConfigEntry) -> Classifier:
     overrides = json.loads(entry.options.get(OPT_OVERRIDES_JSON, "{}") or "{}")
-    return Classifier.from_config({"classification": {"overrides": overrides}})
+    classifier = Classifier.from_config({"classification": {"overrides": overrides}})
+    # class: fields in product_map.yaml win (one curation file for users)
+    classifier.overrides.update(
+        load_map_overrides(Path(hass.config.path(PRODUCT_MAP_FILENAME)))
+    )
+    return classifier
 
 
 async def _fetch_week(
@@ -94,11 +99,13 @@ async def _fetch_week(
     return ingredients
 
 
-def _plan(entry: ConfigEntry, ingredients: list[Ingredient]) -> list[PlannedOrder]:
+def _plan(
+    hass: HomeAssistant, entry: ConfigEntry, ingredients: list[Ingredient]
+) -> list[PlannedOrder]:
     horizon = int(
         entry.options.get(OPT_FRESH_HORIZON_DAYS, DEFAULT_FRESH_HORIZON_DAYS)
     )
-    return plan_orders(ingredients, _classifier(entry), fresh_horizon_days=horizon)
+    return plan_orders(ingredients, _classifier(hass, entry), fresh_horizon_days=horizon)
 
 
 def _register_services(hass: HomeAssistant) -> None:
@@ -109,7 +116,7 @@ def _register_services(hass: HomeAssistant) -> None:
         entry = _entry(hass)
         week_day: date = call.data.get(ATTR_WEEK) or date.today()
         ingredients = await _fetch_week(entry, week_day)
-        orders = _plan(entry, ingredients)
+        orders = _plan(hass, entry, ingredients)
         persistent_notification.async_create(
             hass,
             render_markdown(orders),
@@ -125,7 +132,7 @@ def _register_services(hass: HomeAssistant) -> None:
         )
 
         ingredients = await _fetch_week(entry, target)
-        orders = [o for o in _plan(entry, ingredients) if o.delivery_date == target]
+        orders = [o for o in _plan(hass, entry, ingredients) if o.delivery_date == target]
         if not orders:
             _LOGGER.info("No planned order with delivery date %s", target)
             return

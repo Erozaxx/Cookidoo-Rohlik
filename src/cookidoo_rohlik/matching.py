@@ -118,6 +118,8 @@ class ProductMatcher:
         needed = total_needed(item.quantities)
 
         cached = self._cache.get(key)
+        if cached and "product_id" not in cached:
+            cached = None  # class-only curation entry; still search product
         if cached:
             product = Product(
                 id=int(cached["product_id"]),
@@ -150,7 +152,8 @@ class ProductMatcher:
             return MatchResult(item=item, product=None, packages=0,
                                score=best_score, from_cache=False)
 
-        self._cache[key] = {
+        entry = self._cache.get(key, {})
+        entry.update({
             "ingredient": item.name,
             "product_id": best.id,
             "product_name": best.name,
@@ -158,7 +161,8 @@ class ProductMatcher:
             "price": best.price,
             "currency": best.currency,
             "textual_amount": best.textual_amount,
-        }
+        })
+        self._cache[key] = entry
         return MatchResult(
             item=item,
             product=best,

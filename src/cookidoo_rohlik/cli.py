@@ -25,7 +25,7 @@ from pathlib import Path
 
 import yaml
 
-from .classify import Classifier
+from .classify import Classifier, load_map_overrides
 from .models import Ingredient
 from .planner import plan_orders
 from .render import render_markdown
@@ -83,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
 
     cfg = _load_config(args.config)
     classifier = Classifier.from_config(cfg)
+    map_path = getattr(args, "cache", None) or Path("config/product_map.yaml")
+    classifier.overrides.update(load_map_overrides(Path(map_path)))
     planner_cfg = cfg.get("planner", {}) or {}
     horizon = int(planner_cfg.get("fresh_horizon_days", 2))
 

@@ -5,6 +5,11 @@
 # Klíč je název ingredience — na velikosti písmen a diakritice nezáleží.
 # Povinné je jen product_id (najdeš ho v URL produktu na rohlik.cz).
 # textual_amount = velikost balení; z ní se počítá počet kusů.
+#
+# Volitelně lze ke každé ingredienci přidat `class:` a přebít tak
+# automatickou klasifikaci: fresh | durable | pantry
+# (čerstvé / trvanlivé / spíž — pantry se nikdy neobjednává).
+# Záznam může mít i jen class bez produktu.
 
 kuřecí stehna:
   product_id: 1294352
@@ -15,3 +20,11 @@ smetana ke šlehání:
   product_id: 1351722
   product_name: Tatra smetana ke šlehání 31%
   textual_amount: 250 ml
+
+# jen oprava klasifikace (produkt si matcher najde sám):
+rajčatový protlak:
+  class: durable
+
+# spíž — nikdy neobjednávat:
+kapary:
+  class: pantry

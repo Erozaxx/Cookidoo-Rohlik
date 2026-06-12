@@ -97,31 +97,33 @@ event `cookidoo_rohlik_orders_prepared` — na něj navěsíš vlastní notifika
 
 ## Doladění klasifikace a párování
 
-- **Klasifikace**: defaultní česká klíčová slova občas netrefí —
-  např. „rajčatový protlak" spadne do čerstvých (klíčové slovo `rajc`).
-  Oprava jedním řádkem v configu / HA options:
+Všechno ladění žije v jednom čitelném souboru `config/product_map.yaml`
+(v HA `config/cookidoo_rohlik_product_map.yaml`, ukázka
+v `config/product_map.example.yaml`). Klíčem je název ingredience,
+jak ho znáš z receptu:
 
-  ```yaml
-  classification:
-    overrides:
-      "rajčatový protlak": durable
-  ```
+```yaml
+# špatně vybraný produkt? přepiš product_id (z URL na rohlik.cz):
+kuřecí stehna:
+  product_id: 1294352
+  product_name: Vodňanské kuřecí stehna chlazená
+  textual_amount: 600 g        # velikost balení -> výpočet počtu kusů
 
-- **Párování**: `config/product_map.yaml` (v HA
-  `config/cookidoo_rohlik_product_map.yaml`) si pamatuje naučená mapování
-  v čitelném YAML — klíčem je název ingredience, jak ho znáš z receptu:
+# špatná kategorie? přidej class (fresh / durable / pantry):
+rajčatový protlak:
+  class: durable               # default by řekl „čerstvé" (klíčové slovo rajc)
 
-  ```yaml
-  kuřecí stehna:
-    product_id: 1294352          # z URL produktu na rohlik.cz
-    product_name: Vodňanské kuřecí stehna chlazená
-    textual_amount: 600 g        # velikost balení -> výpočet počtu kusů
-  ```
+# máš doma vždycky? pantry se nikdy neobjednává:
+kapary:
+  class: pantry
+```
 
-  Když matcher vybere blbost, přepiš `product_id` na správný produkt —
-  příště už se nezmýlí; smazáním záznamu ho necháš hledat znovu. Položky
-  pod 50% shodou se nehádají a objeví se v notifikaci jako „nenalezeno".
-  Starší `product_map.json` se při prvním běhu automaticky zmigruje.
+Naučená mapování si sem matcher zapisuje sám; smazáním záznamu ho
+necháš hledat znovu. Položky pod 50% shodou se nehádají a objeví se
+v notifikaci jako „nenalezeno". Starší `product_map.json` se při prvním
+běhu automaticky zmigruje. (Klíčová slova klasifikace jdou navíc měnit
+v `config/config.yaml`, resp. v HA options — `class:` v mapě má vždy
+přednost.)
 
 ## Roadmap
 
