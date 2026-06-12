@@ -1,91 +1,133 @@
-# Cookidoo → Rohlík
+# Cookidoo → Rohlík 🍳🛒
 
-Integrace, která vezme týdenní jídelníček z Cookidoo (Thermomix) a objedná
-ingredience z Rohlik.cz — trvanlivé jednou týdně automaticky, čerstvé
-„just-in-time" tak, aby ráno dorazily suroviny na daný den (max 2 dny dopředu).
+**Naplánuj si v Cookidoo jídelníček na týden — o nákup se postará integrace.**
 
-## Stav (fáze 1 hotová)
+Trvanlivé potraviny ti přijedou jednou na začátku týdne. Čerstvé (maso, ryby,
+mléčné výrobky, bylinky…) se objednávají postupně tak, aby ti **ráno dorazily
+suroviny na ten daný den** — nikdy ne víc než na 2 dny dopředu. Žádná zvadlá
+bazalka ve čtvrtek.
 
-- [x] Cookidoo klient (neoficiální `cookidoo-api`): týdenní plán → ingredience po dnech
-- [x] Klasifikace čerstvé / trvanlivé / spíž (CZ keyword defaults + overrides v configu)
-- [x] Plánovač objednávek: 1× týdenní trvanlivá (auto-checkout) + čerstvé okna max 2 dny
-- [x] CLI dry-run (offline sample i živé Cookidoo)
-- [x] Fáze 2: Rohlík klient (login, search, košík, sloty), parsování množství,
-      matcher ingredience→produkt s perzistentní cache (`config/product_map.json`),
-      orchestrátor + CLI `order` (dry-run / `--execute` naplní košík)
-- [x] Fáze 3: Home Assistant custom integrace (`custom_components/cookidoo_rohlik`):
-      config flow + options, služby `plan_week` a `prepare_orders`, persistent
-      notifikace, event `cookidoo_rohlik_orders_prepared` pro actionable
-      notifikace na mobil (příklady v `examples/ha_automations.yaml`)
+## Jak to vypadá v praxi
 
-## Rychlý start
+Naplánuješ si v Cookidoo třeba: pondělí kuře na paprice, úterý těstoviny,
+čtvrtek losos, sobota guláš. Integrace pak:
+
+| Kdy | Co se stane |
+|---|---|
+| neděle večer | 📋 notifikace s plánem objednávek na celý týden |
+| neděle večer | 🛒 připraví košík: **týdenní trvanlivé** (těstoviny, brambory…) + čerstvé na po+út |
+| ty: 1 tap | ✅ potvrdíš objednávku v aplikaci Rohlík, vybereš ranní slot |
+| pondělí ráno | 🚚 doručení — vaříš z čerstvého |
+| středa večer | 🛒 košík s čerstvým na čtvrtek (losos, kopr) → tap → čtvrtek ráno doručeno |
+| pátek večer | 🛒 košík na sobotní guláš → tap → sobota ráno doručeno |
+
+Ingredience, které máš doma (sůl, olej, koření…), se neobjednávají vůbec.
+
+## Jak to funguje uvnitř
+
+1. **Cookidoo** — stáhne týdenní kalendář a ingredience receptů
+   (neoficiální [cookidoo-api](https://github.com/miaucl/cookidoo-api)).
+2. **Klasifikace** — každá ingredience je *čerstvá* / *trvanlivá* / *spíž*
+   (česká klíčová slova + tvoje vlastní výjimky).
+3. **Plánovač** — rozdělí týden na objednávky: 1× trvanlivá + čerstvá „okna"
+   max 2 dny (nastavitelné 1–4).
+4. **Párování** — najde produkty na Rohlíku, spočítá počet balení podle
+   gramáže a učí se: jednou potvrzené mapování ingredience → produkt si
+   pamatuje v `product_map.json` (můžeš ručně upravovat).
+5. **Košík + notifikace** — naplní košík na Rohlíku a pošle ti report
+   s cenou a případnými nenalezenými položkami. **Checkout dokončuješ
+   jedním tapem v aplikaci Rohlík** — automatické dokončení objednávky
+   neexistuje (žádné veřejné API ho neumí a podmínky Rohlíku ho přes
+   automatizaci nepovolují).
+
+## Současný stav
+
+| Část | Stav |
+|---|---|
+| Plánovač, klasifikace, parsování množství | ✅ hotovo, pokryto testy (19/19) |
+| Cookidoo klient | ✅ napsáno proti reálnému API v0.17 — ⚠️ čeká na živý test |
+| Rohlík klient (login, hledání, košík, sloty) | ✅ napsáno dle ověřených endpointů — ⚠️ čeká na živý test |
+| Párování ingredience → produkt | ✅ hotovo (token overlap + cache) — kvalitu doladíme po živém testu |
+| CLI (dry-run i ostré plnění košíku) | ✅ hotovo |
+| Home Assistant integrace | ✅ napsáno, import-checknuto proti HA 2025.1 — ⚠️ neběželo v reálném HA |
+| Automatický checkout | ❌ záměrně ne — vždy 1 tap v aplikaci Rohlík |
+| Výběr ranního slotu, kontrola min. hodnoty objednávky | 🔜 roadmap |
+
+⚠️ = funkční kód, který zatím nebyl spuštěn proti živým účtům. Než to
+pustíš naostro, projdi checklist níže.
+
+## Rychlý start (CLI)
 
 ```bash
 pip install -e ".[dev]"
-pytest
+pytest                                                  # 1) offline testy
 
-# offline dry-run na ukázkových datech
-python -m cookidoo_rohlik.cli plan --sample tests/sample_week.json
-
-# živě proti Cookidoo
+# 2) živé Cookidoo — jen čte
 export COOKIDOO_EMAIL=...   # nikdy necommitovat
 export COOKIDOO_PASSWORD=...
 python -m cookidoo_rohlik.cli plan --week 2026-06-15
 
-# napárování na produkty Rohlíku (dry-run, jen čte)
+# 3) párování na Rohlík — dry-run, jen čte
 export ROHLIK_EMAIL=...
 export ROHLIK_PASSWORD=...
 python -m cookidoo_rohlik.cli order --week 2026-06-15
 
-# reálně naplnit košík pro konkrétní objednávku (checkout dokončíš v aplikaci)
+# 4) ostrý běh — naplní košík (checkout dokončíš v aplikaci)
 python -m cookidoo_rohlik.cli order --week 2026-06-15 --date 2026-06-15 --execute
 ```
 
-## Důležité zjištění ke checkoutu
-
-Žádný veřejný reverse-engineered projekt neimplementuje dokončení objednávky —
-flow proto končí naplněným košíkem (+ do budoucna notifikace z HA). To je
-v souladu i s podmínkami oficiálního Rohlík MCP. "Hybrid" tedy zatím znamená:
-trvanlivá objednávka se připraví automaticky do košíku, čerstvé taky,
-checkout potvrzuješ v aplikaci Rohlík (jeden tap navíc).
-
-## Mapování ingredience → produkt
-
-`config/product_map.json` je perzistentní cache; první match se učí
-z vyhledávání (token overlap, levnější vyhrává), pod 50 % shody se položka
-nahlásí jako nenalezená. Soubor můžeš ručně kurátorovat — pevně přiřadit
-přesný produkt (product_id) k ingredienci.
-
-## Konfigurace
-
-`cp config/config.example.yaml config/config.yaml` (je v .gitignore).
-Klasifikaci dolaďuj přes `classification.overrides` — např. „rajčatový protlak"
-defaultně spadne do čerstvých (keyword `rajc`), správně patří do trvanlivých:
-
-```yaml
-classification:
-  overrides:
-    "rajčatový protlak": durable
-```
-
-## Disclaimer
-
-Používá neoficiální Cookidoo API (`cookidoo-api`) — může se kdykoliv rozbít.
-Rohlík část (fáze 2): oficiální MCP server umožňuje jen plnění košíku
-(objednávku dokončuje zákazník v e-shopu); automatický checkout trvanlivé
-objednávky vyžaduje neoficiální API. Jen pro osobní použití.
-
+Offline ukázka bez účtů: `python -m cookidoo_rohlik.cli plan --sample tests/sample_week.json`
 
 ## Home Assistant
 
 1. Zkopíruj `custom_components/cookidoo_rohlik/` do HA `config/custom_components/`
    (nebo přidej repo jako HACS custom repository) a restartuj HA.
-2. Nastavení → Zařízení a služby → Přidat integraci → "Cookidoo → Rohlík"
+2. Nastavení → Zařízení a služby → Přidat integraci → **Cookidoo → Rohlík**
    (4 přihlašovací údaje; Rohlík se ověří hned, Cookidoo při prvním plánu).
-3. V možnostech integrace: horizont čerstvých, auto-plnění košíku, overrides.
-4. Převezmi automatizace z `examples/ha_automations.yaml` (neděle plán,
-   denně 19:30 příprava košíku na zítřek, mobilní notifikace s deeplinkem).
+3. V možnostech integrace: horizont čerstvých (1–4 dny), auto-plnění košíku,
+   klasifikační výjimky.
+4. Převezmi automatizace z [`examples/ha_automations.yaml`](examples/ha_automations.yaml):
+   neděle plán, denně 19:30 příprava košíku na zítřek, mobilní notifikace
+   s cenou a proklikem do Rohlíku.
 
-Mapping cache žije v `config/cookidoo_rohlik_product_map.json` a lze ji
-ručně kurátorovat. Core knihovna je do komponenty vendorovaná —
-po změně v `src/` spusť `scripts/sync_core.sh`.
+Služby: `cookidoo_rohlik.plan_week` a `cookidoo_rohlik.prepare_orders`
+(jdou volat i ručně z Vývojářských nástrojů). Po přípravě košíku se vyšle
+event `cookidoo_rohlik_orders_prepared` — na něj navěsíš vlastní notifikace.
+
+## Doladění klasifikace a párování
+
+- **Klasifikace**: defaultní česká klíčová slova občas netrefí —
+  např. „rajčatový protlak" spadne do čerstvých (klíčové slovo `rajc`).
+  Oprava jedním řádkem v configu / HA options:
+
+  ```yaml
+  classification:
+    overrides:
+      "rajčatový protlak": durable
+  ```
+
+- **Párování**: `config/product_map.json` (v HA `config/cookidoo_rohlik_product_map.json`)
+  si pamatuje naučená mapování. Když matcher vybere blbost, přepiš v souboru
+  `product_id` na správný produkt — příště už se nezmýlí. Položky pod 50%
+  shodou se nehádají a objeví se v notifikaci jako „nenalezeno".
+
+## Roadmap
+
+- Výběr ranního doručovacího slotu (endpoint už klient umí číst)
+- Kontrola minimální hodnoty objednávky před naplněním košíku
+- HA senzor s nenapárovanými položkami, reauth flow
+- Chytřejší párování (preference biokvalita/značka/cena, případně LLM)
+
+## Vývoj
+
+Zdroj pravdy core logiky je `src/cookidoo_rohlik/`; do HA komponenty se
+vendoruje přes `scripts/sync_core.sh` (po každé změně core spustit).
+Testy: `pytest`.
+
+## Disclaimer
+
+Neoficiální integrace pro osobní použití. Používá reverse-engineered API
+Cookidoo i Rohlíku — obojí se může kdykoliv změnit a rozbít. Nijak
+nesouvisí s Vorwerk/Cookidoo ani VELKÁ PECKA s.r.o. (Rohlik.cz).
+Objednávky vždy potvrzuješ sám v aplikaci Rohlík; před potvrzením
+zkontroluj obsah košíku.
