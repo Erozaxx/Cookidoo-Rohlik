@@ -86,6 +86,19 @@ def main(argv: list[str] | None = None) -> int:
     p_plan.add_argument("--config", type=Path, default=Path("config/config.yaml"))
     p_plan.add_argument("-v", "--verbose", action="store_true")
 
+    p_order = sub.add_parser(
+        "order", help="Resolve orders to Rohlik products (dry-run unless --execute)"
+    )
+    p_order.add_argument("--sample", type=Path, help="Offline JSON sample instead of live Cookidoo")
+    p_order.add_argument("--week", type=str, help="Any day of the target week, YYYY-MM-DD")
+    p_order.add_argument("--date", type=str, help="Only the order delivered on this date (YYYY-MM-DD)")
+    p_order.add_argument("--execute", action="store_true",
+                         help="Actually add matched items to the Rohlik cart")
+    p_order.add_argument("--cache", type=Path, default=Path("config/product_map.json"),
+                         help="Ingredient->product mapping cache (curatable)")
+    p_order.add_argument("--config", type=Path, default=Path("config/config.yaml"))
+    p_order.add_argument("-v", "--verbose", action="store_true")
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(levelname)s %(name)s: %(message)s")
@@ -112,8 +125,43 @@ def main(argv: list[str] | None = None) -> int:
         _, ingredients = asyncio.run(client.fetch_week_ingredients(week))
 
     orders = plan_orders(ingredients, classifier, fresh_horizon_days=horizon)
-    print(render_markdown(orders))
-    return 0
+
+    if args.command == "plan":
+        print(render_markdown(orders))
+        return 0
+
+    # command == "order": resolve against Rohlik
+    if args.date:
+        target = datetime.strptime(args.date, "%Y-%m-%d").date()
+        orders = [o for o in orders if o.delivery_date == target]
+        if not orders:
+            print(f"ERROR: no planned order with delivery date {target}.", file=sys.stderr)
+            return 1
+
+    r_email = os.environ.get("ROHLIK_EMAIL")
+    r_password = os.environ.get("ROHLIK_PASSWORD")
+    if not r_email or not r_password:
+        print("ERROR: set ROHLIK_EMAIL and ROHLIK_PASSWORD.", file=sys.stderr)
+        return 2
+
+    from .matching import ProductMatcher
+    from .orchestrator import render_resolution, resolve_order
+    from .rohlik_client import RohlikClient
+
+    async def _run() -> int:
+        matcher = ProductMatcher(cache_path=args.cache)
+        async with RohlikClient(r_email, r_password) as client:
+            for order in orders:
+                res = await resolve_order(order, matcher, client, execute=args.execute)
+                print(render_resolution(res))
+                print()
+            if args.execute:
+                total, items = await client.get_cart()
+                print(f"Košík: {len(items)} položek, celkem {total:.0f} CZK.")
+                print("Dokonči objednávku v aplikaci/e-shopu Rohlík (checkout je vždy ruční).")
+        return 0
+
+    return asyncio.run(_run())
 
 
 if __name__ == "__main__":
