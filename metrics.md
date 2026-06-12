@@ -27,11 +27,22 @@ nic jiného.
 - 4 git commity pushnuté na main, 19/19 testů
 - 2× klonování referenčních repozitářů, 1× instalace HA do venv (import-check)
 
+## Spotřeba — ověřená data z aplikace (Settings → Usage)
+
+Plán: **Claude Max 5×**. Screenshot z 2026-06-12 15:06 CEST,
+po dokončení celé session (fáze 1–3, dokumentace, push):
+
+| Limit | Spotřeba | Reset |
+|---|---|---|
+| Current session (5h okno) | **50 %** | za 3 h 54 min (~19:00) |
+| Weekly limit (all models) | **3 %** | středa 20:00 |
+
+Celý projekt tedy stál polovinu jednoho 5h okna plánu Max 5×.
+
 ## Spotřeba tokenů — pouze hrubý odhad
 
-Claude nemá přístup ke skutečným počítadlům spotřeby; přesná čísla
-za 5h okno ukazuje aplikace Claude (Settings → Usage). Odhad vychází
-z délky konverzace a počtu kol:
+Aplikace ukazuje procenta limitu, ne absolutní tokeny; ty Claude
+nevidí vůbec. Odhad vychází z délky konverzace a počtu kol:
 
 | Metrika | Odhad (řádově) |
 |---|---|
