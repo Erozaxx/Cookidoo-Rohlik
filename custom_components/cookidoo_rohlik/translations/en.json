@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cookidoo → Rohlík",
+        "data": {
+          "cookidoo_email": "Cookidoo e-mail",
+          "cookidoo_password": "Cookidoo heslo",
+          "rohlik_email": "Rohlík e-mail",
+          "rohlik_password": "Rohlík heslo"
+        }
+      }
+    },
+    "error": {
+      "invalid_rohlik_auth": "Neplatné přihlašovací údaje k Rohlíku.",
+      "cannot_connect": "Nepodařilo se připojit k Rohlíku."
+    },
+    "abort": {
+      "already_configured": "Integrace je již nastavena."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "fresh_horizon_days": "Horizont čerstvých (dny, 1–4)",
+          "auto_execute": "Automaticky plnit košík (bez execute parametru)",
+          "overrides_json": "Klasifikační overrides (JSON: název → fresh/durable/pantry)"
+        }
+      }
+    },
+    "error": {
+      "invalid_overrides_json": "Overrides musí být platný JSON objekt."
+    }
+  }
+}

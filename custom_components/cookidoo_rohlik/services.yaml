@@ -1,0 +1,26 @@
+plan_week:
+  name: Naplánovat týden
+  description: Stáhne jídelníček z Cookidoo a zobrazí plán objednávek (notifikace).
+  fields:
+    week:
+      name: Týden
+      description: Libovolný den cílového týdne (výchozí dnes).
+      selector:
+        date:
+
+prepare_orders:
+  name: Připravit objednávky
+  description: >-
+    Napáruje ingredience na produkty Rohlíku pro objednávky doručované
+    v daný den a volitelně naplní košík. Checkout je vždy ruční.
+  fields:
+    date:
+      name: Den doručení
+      description: Výchozí je zítřek.
+      selector:
+        date:
+    execute:
+      name: Naplnit košík
+      description: Když vypnuto, jen dry-run report (výchozí dle nastavení integrace).
+      selector:
+        boolean:

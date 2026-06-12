@@ -1,0 +1,49 @@
+# Příklady automatizací pro Cookidoo → Rohlík.
+# Časování si uprav; služby lze volat i ručně z Vývojářských nástrojů.
+
+# 1) Neděle 19:00 — náhled plánu na příští týden (jen notifikace)
+- alias: "Cookidoo: týdenní plán"
+  triggers:
+    - trigger: time
+      at: "19:00:00"
+  conditions:
+    - condition: time
+      weekday: [sun]
+  actions:
+    - action: cookidoo_rohlik.plan_week
+      data:
+        week: "{{ (now() + timedelta(days=1)).date() }}"
+
+# 2) Každý den 19:30 — připravit košík na zítřejší doručení
+#    (plánovač sám pozná, jestli na zítřek nějaká objednávka připadá:
+#     v pondělí týdenní trvanlivá + čerstvé okno, jindy jen čerstvé)
+- alias: "Cookidoo: připravit zítřejší objednávku"
+  triggers:
+    - trigger: time
+      at: "19:30:00"
+  actions:
+    - action: cookidoo_rohlik.prepare_orders
+      data:
+        execute: true
+
+# 3) Po naplnění košíku — actionable notifikace na mobil s prokliky
+- alias: "Cookidoo: notifikace po přípravě košíku"
+  triggers:
+    - trigger: event
+      event_type: cookidoo_rohlik_orders_prepared
+      event_data:
+        executed: true
+  actions:
+    - action: notify.mobile_app_VAS_TELEFON   # uprav název služby
+      data:
+        title: "🛒 Rohlík: košík na {{ trigger.event.data.date }}"
+        message: >-
+          {{ trigger.event.data.orders }} objednávka/y,
+          cca {{ trigger.event.data.estimated_price }} Kč.
+          {% if trigger.event.data.unmatched %}
+          Nenalezeno: {{ trigger.event.data.unmatched | join(', ') }}.
+          {% endif %}
+          Otevři Rohlík a dokonči checkout (vyber ranní slot).
+        data:
+          url: "https://www.rohlik.cz/objednavka"  # iOS: otevře web/aplikaci
+          clickAction: "https://www.rohlik.cz/objednavka"  # Android

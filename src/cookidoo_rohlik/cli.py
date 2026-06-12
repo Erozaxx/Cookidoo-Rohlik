@@ -26,8 +26,9 @@ from pathlib import Path
 import yaml
 
 from .classify import Classifier
-from .models import Ingredient, OrderKind, PlannedOrder
+from .models import Ingredient
 from .planner import plan_orders
+from .render import render_markdown
 
 
 def _load_sample(path: Path) -> list[Ingredient]:
@@ -51,29 +52,6 @@ def _load_config(path: Path | None) -> dict:
     if path is None or not path.exists():
         return {}
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-
-
-def render_markdown(orders: list[PlannedOrder]) -> str:
-    lines: list[str] = []
-    kind_label = {
-        OrderKind.WEEKLY_DURABLE: "TÝDENNÍ (trvanlivé, auto-checkout)",
-        OrderKind.FRESH: "ČERSTVÉ (košík + potvrzení)",
-    }
-    for order in orders:
-        days = ", ".join(d.isoformat() for d in order.covers_days)
-        lines.append(f"## {order.delivery_date.isoformat()} — {kind_label[order.kind]}")
-        lines.append(f"Pokrývá dny vaření: {days}")
-        lines.append("")
-        lines.append("| Ingredience | Množství | Recepty |")
-        lines.append("|---|---|---|")
-        for item in order.items:
-            qty = " + ".join(item.quantities) if item.quantities else "-"
-            recipes = ", ".join(item.recipes)
-            lines.append(f"| {item.name} | {qty} | {recipes} |")
-        lines.append("")
-    if not orders:
-        lines.append("Žádné objednávky — prázdný plán.")
-    return "\n".join(lines)
 
 
 def main(argv: list[str] | None = None) -> int:

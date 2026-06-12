@@ -13,7 +13,10 @@ ingredience z Rohlik.cz — trvanlivé jednou týdně automaticky, čerstvé
 - [x] Fáze 2: Rohlík klient (login, search, košík, sloty), parsování množství,
       matcher ingredience→produkt s perzistentní cache (`config/product_map.json`),
       orchestrátor + CLI `order` (dry-run / `--execute` naplní košík)
-- [ ] Fáze 3: Home Assistant custom integrace (config flow, notifikace s potvrzením čerstvé objednávky)
+- [x] Fáze 3: Home Assistant custom integrace (`custom_components/cookidoo_rohlik`):
+      config flow + options, služby `plan_week` a `prepare_orders`, persistent
+      notifikace, event `cookidoo_rohlik_orders_prepared` pro actionable
+      notifikace na mobil (příklady v `examples/ha_automations.yaml`)
 
 ## Rychlý start
 
@@ -71,3 +74,18 @@ Používá neoficiální Cookidoo API (`cookidoo-api`) — může se kdykoliv ro
 Rohlík část (fáze 2): oficiální MCP server umožňuje jen plnění košíku
 (objednávku dokončuje zákazník v e-shopu); automatický checkout trvanlivé
 objednávky vyžaduje neoficiální API. Jen pro osobní použití.
+
+
+## Home Assistant
+
+1. Zkopíruj `custom_components/cookidoo_rohlik/` do HA `config/custom_components/`
+   (nebo přidej repo jako HACS custom repository) a restartuj HA.
+2. Nastavení → Zařízení a služby → Přidat integraci → "Cookidoo → Rohlík"
+   (4 přihlašovací údaje; Rohlík se ověří hned, Cookidoo při prvním plánu).
+3. V možnostech integrace: horizont čerstvých, auto-plnění košíku, overrides.
+4. Převezmi automatizace z `examples/ha_automations.yaml` (neděle plán,
+   denně 19:30 příprava košíku na zítřek, mobilní notifikace s deeplinkem).
+
+Mapping cache žije v `config/cookidoo_rohlik_product_map.json` a lze ji
+ručně kurátorovat. Core knihovna je do komponenty vendorovaná —
+po změně v `src/` spusť `scripts/sync_core.sh`.
