@@ -28,16 +28,17 @@ Dle uživatele v aktuálním 5h okně neproběhlo nic jiného.
 
 ## Spotřeba — ověřená data z aplikace (Settings → Usage)
 
-Plán: **Claude Max 5×**. Screenshot z 2026-06-12 15:06 CEST,
-po dokončení fází 1–3 a dokumentace (pozdější drobné úpravy — YAML
-mapa, aktualizace metrik — už v čísle nejsou):
+Plán: **Claude Max 5×**, dva ověřené odečty ze screenshotů:
 
-| Limit | Spotřeba | Reset |
-|---|---|---|
-| Current session (5h okno) | **50 %** | za 3 h 54 min (~19:00) |
-| Weekly limit (all models) | **3 %** | středa 20:00 |
+| Čas | Stav projektu | 5h okno | Weekly (all models) |
+|---|---|---|---|
+| 15:06 | po fázích 1–3 + dokumentace | **50 %** | 3 % |
+| 15:58 | + YAML mapa, class overrides, aktualizace metrik | **65 %** | 4 % |
 
-Celý projekt tedy stál polovinu jednoho 5h okna plánu Max 5×.
+Reset okna ~19:00, weekly reset středa ~20:00. Hlavní vývoj (fáze 1–3)
+stál polovinu jednoho 5h okna; následné iterace nad mapováním
+a dokumentací dalších ~15 p. b. — pozdější úpravy jsou relativně
+dražší, protože každé kolo přeposílá celý narostlý kontext konverzace.
 
 ## Spotřeba tokenů — pouze hrubý odhad
 
